@@ -26,6 +26,14 @@ func main() {
 		if update.Message != nil { // If we got a message
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 
+			if len(update.Message.Photo) > 0 {
+				msg := tgbotapi.NewPhoto(update.Message.Chat.ID, tgbotapi.FileID(update.Message.Photo[0].FileID))
+				msg.ReplyToMessageID = update.Message.MessageID
+
+				bot.Send(msg)
+				continue
+			}
+
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
 			msg.ReplyToMessageID = update.Message.MessageID
 

@@ -1,6 +1,4 @@
 runtime: go118
 
-instance_class: E2
-
 includes:
  - secret.yaml
