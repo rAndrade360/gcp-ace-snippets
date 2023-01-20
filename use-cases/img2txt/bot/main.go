@@ -91,7 +91,7 @@ func main() {
 }
 
 func GenerateASCII(imge image.Image) string {
-	imge = resize.Resize(85, 40, imge, resize.Lanczos2)
+	imge = resize.Resize(38, 17, imge, resize.Lanczos2)
 
 	txt := ""
 
