@@ -19,7 +19,7 @@ type PubSubMessage struct {
 type Message struct {
 	ID        string `json:"id"`
 	Type      string `json:"type"`
-	FileID    string `json:"fileId"`
+	FilePath  string `json:"filePath"`
 	ChatID    int64  `json:"chatId"`
 	MessageID int    `json:"messageId"`
 }
@@ -44,7 +44,7 @@ func Deploy(ctx context.Context, msg PubSubMessage) error {
 		return nil
 	}
 
-	url := fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", os.Getenv("BOT_TOKEN"), m.FileID)
+	url := fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", os.Getenv("BOT_TOKEN"), m.FilePath)
 	res, err := http.Get(url)
 	if err != nil {
 		return err
@@ -57,7 +57,7 @@ func Deploy(ctx context.Context, msg PubSubMessage) error {
 		return err
 	}
 
-	w := client.Bucket(bucket).Object(objectPath + m.FileID).NewWriter(ctx)
+	w := client.Bucket(bucket).Object(objectPath + m.FilePath).NewWriter(ctx)
 	defer w.Close()
 	_, err = io.Copy(w, res.Body)
 	if err != nil {
