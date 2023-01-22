@@ -10,12 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"cloud.google.com/go/pubsub"
 	"cloud.google.com/go/storage"
 )
-
-type PubSubMessage struct {
-	Data []byte `json:"data"`
-}
 
 type Message struct {
 	ID       string `json:"id"`
@@ -28,7 +25,7 @@ var (
 	objectPath = os.Getenv("OBJECT_PATH")
 )
 
-func Deploy(ctx context.Context, msg PubSubMessage) error {
+func Deploy(ctx context.Context, msg pubsub.Message) error {
 	var m Message
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
@@ -79,6 +76,8 @@ func Deploy(ctx context.Context, msg PubSubMessage) error {
 	if err != nil {
 		return err
 	}
+
+	msg.Ack()
 
 	return nil
 }
