@@ -51,11 +51,21 @@ func main() {
 
 			if len(update.Message.Photo) > 0 {
 
+				file, err := bot.GetFile(tgbotapi.FileConfig{
+					FileID: update.Message.Photo[0].FileID,
+				})
+				if err != nil {
+					txt := "Não foi dessa vez, estamos com problemas internos"
+					msgTxt := tgbotapi.NewMessage(update.Message.Chat.ID, txt)
+					msgTxt.ReplyToMessageID = update.Message.MessageID
+					bot.Send(msgTxt)
+					continue
+				}
+
 				mes := Message{
 					ID:        uuid.NewString(),
 					Type:      "UPLOAD_FROM_TELEGRAM",
-					FileID:    update.Message.Photo[0].FileID,
-					BotToken:  os.Getenv("BOT_TOKEN"),
+					FilePath:  file.FilePath,
 					ChatID:    update.Message.Chat.ID,
 					MessageID: update.Message.MessageID,
 				}
