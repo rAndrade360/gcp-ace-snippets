@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -57,7 +58,13 @@ func Deploy(ctx context.Context, msg PubSubMessage) error {
 		return err
 	}
 
-	w := client.Bucket(bucket).Object(objectPath + m.FilePath).NewWriter(ctx)
+	var filename = m.FilePath
+	ss := strings.Split(m.FilePath, "/")
+	if len(ss) > 0 {
+		filename = m.ID + "-" + ss[len(ss)-1]
+	}
+
+	w := client.Bucket(bucket).Object(objectPath + filename).NewWriter(ctx)
 	defer w.Close()
 	_, err = io.Copy(w, res.Body)
 	if err != nil {
