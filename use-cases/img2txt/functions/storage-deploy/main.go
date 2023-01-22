@@ -67,16 +67,15 @@ func Deploy(ctx context.Context, msg PubSubMessage) error {
 	w := o.NewWriter(ctx)
 	defer w.Close()
 
-	_, err = io.Copy(w, res.Body)
-	if err != nil {
-		return err
+	w.ObjectAttrs.Metadata = map[string]string{
+		"messageId": m.ID,
 	}
 
-	_, err = o.Update(ctx, storage.ObjectAttrsToUpdate{
-		Metadata: map[string]string{
-			"messageId": m.ID,
-		},
-	})
+	w.Metadata = map[string]string{
+		"messageId": m.ID,
+	}
+
+	_, err = io.Copy(w, res.Body)
 	if err != nil {
 		return err
 	}
