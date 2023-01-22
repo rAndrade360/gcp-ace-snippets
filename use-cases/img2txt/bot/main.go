@@ -1,22 +1,28 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"image"
-	"image/jpeg"
 	"log"
 	"math"
 	"net/http"
 	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/google/uuid"
 	"github.com/nfnt/resize"
 )
 
 var scale = []string{" ", ".", ",", "-", "~", "+", "=", "7", "8", "9", "$", "W", "#", "@", "Ñ"}
 
+var (
+	PORT       = os.Getenv("PORT")
+	PROJECT_ID = os.Getenv("PROJECT_ID")
+)
+
 func main() {
-	PORT := os.Getenv("PORT")
 	if PORT == "" {
 		PORT = "8080"
 		log.Printf("Defaulting to PORT %s", PORT)
@@ -44,34 +50,23 @@ func main() {
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 
 			if len(update.Message.Photo) > 0 {
-				msg := tgbotapi.NewPhoto(update.Message.Chat.ID, tgbotapi.FileID(update.Message.Photo[0].FileID))
 
-				msg.ReplyToMessageID = update.Message.MessageID
-
-				f, err := bot.GetFile(tgbotapi.FileConfig{
-					FileID: update.Message.Photo[0].FileID,
-				})
-				if err != nil {
-					log.Println("Err to get file: ", err.Error())
-					bot.Send(msg)
-					continue
+				mes := Message{
+					ID:        uuid.NewString(),
+					Type:      "UPLOAD_FROM_TELEGRAM",
+					FileID:    update.Message.Photo[0].FileID,
+					BotToken:  os.Getenv("BOT_TOKEN"),
+					ChatID:    update.Message.Chat.ID,
+					MessageID: update.Message.MessageID,
 				}
 
-				res, err := http.Get(f.Link(os.Getenv("BOT_TOKEN")))
-				if err != nil {
-					log.Println("Err to get file: ", err.Error())
-					bot.Send(msg)
-					continue
-				}
+				d, _ := json.Marshal(mes)
 
-				imge, err := jpeg.Decode(res.Body)
+				err = Pub(context.Background(), PROJECT_ID, d)
+				txt := "Aguarde um pouco, quando finalizarmos o processamento te enviaremos o resultado."
 				if err != nil {
-					log.Fatal("Err to decode img: ", err.Error())
-					bot.Send(msg)
-					continue
+					txt = "Não foi dessa vez, estamos com problemas internos"
 				}
-
-				txt := GenerateASCII(imge)
 
 				msgTxt := tgbotapi.NewMessage(update.Message.Chat.ID, txt)
 				msgTxt.ReplyToMessageID = update.Message.MessageID
@@ -80,7 +75,7 @@ func main() {
 				continue
 			}
 
-			txt := fmt.Sprintf("Olá %s, que tal enviar um imagem para ver um truque de mágica?", update.Message.From.FirstName)
+			txt := fmt.Sprintf("Olá %s, que tal enviar uma imagem para ver um truque de mágica?", update.Message.From.FirstName)
 
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, txt)
 			msg.ReplyToMessageID = update.Message.MessageID
