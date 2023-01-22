@@ -31,7 +31,7 @@ var (
 func Deploy(ctx context.Context, msg PubSubMessage) error {
 	var m Message
 
-	ctx, cancel := context.WithTimeout(ctx, time.Second*50)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
 	err := json.Unmarshal(msg.Data, &m)
@@ -64,16 +64,19 @@ func Deploy(ctx context.Context, msg PubSubMessage) error {
 
 	o := client.Bucket(bucket).Object(objectPath + filename)
 
-	o.Update(ctx, storage.ObjectAttrsToUpdate{
-		Metadata: map[string]string{
-			"messageId": m.ID,
-		},
-	})
-
 	w := o.NewWriter(ctx)
 	defer w.Close()
 
 	_, err = io.Copy(w, res.Body)
+	if err != nil {
+		return err
+	}
+
+	_, err = o.Update(ctx, storage.ObjectAttrsToUpdate{
+		Metadata: map[string]string{
+			"messageId": m.ID,
+		},
+	})
 	if err != nil {
 		return err
 	}
