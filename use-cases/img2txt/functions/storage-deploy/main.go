@@ -18,11 +18,9 @@ type PubSubMessage struct {
 }
 
 type Message struct {
-	ID        string `json:"id"`
-	Type      string `json:"type"`
-	FilePath  string `json:"filePath"`
-	ChatID    int64  `json:"chatId"`
-	MessageID int    `json:"messageId"`
+	ID       string `json:"id"`
+	Type     string `json:"type"`
+	FilePath string `json:"filePath"`
 }
 
 var (
@@ -58,20 +56,27 @@ func Deploy(ctx context.Context, msg PubSubMessage) error {
 		return err
 	}
 
-	var filename = m.FilePath
+	var filename = strings.ReplaceAll(m.FilePath, "-", "")
 	ss := strings.Split(m.FilePath, "/")
 	if len(ss) > 0 {
 		filename = m.ID + "-" + ss[len(ss)-1]
 	}
 
-	w := client.Bucket(bucket).Object(objectPath + filename).NewWriter(ctx)
+	o := client.Bucket(bucket).Object(objectPath + filename)
+
+	o.Update(ctx, storage.ObjectAttrsToUpdate{
+		Metadata: map[string]string{
+			"messageId": m.ID,
+		},
+	})
+
+	w := o.NewWriter(ctx)
 	defer w.Close()
+
 	_, err = io.Copy(w, res.Body)
 	if err != nil {
 		return err
 	}
-
-	w.Close()
 
 	return nil
 }
