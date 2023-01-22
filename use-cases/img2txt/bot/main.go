@@ -3,19 +3,15 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"image"
 	"log"
-	"math"
 	"net/http"
 	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
-	"github.com/nfnt/resize"
 )
-
-var scale = []string{" ", ".", ",", "-", "~", "+", "=", "7", "8", "9", "$", "W", "#", "@", "Ñ"}
 
 var (
 	PORT       = os.Getenv("PORT")
@@ -44,6 +40,25 @@ func main() {
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	go http.ListenAndServe(":"+PORT, nil)
+
+	receive := func(b []byte) error {
+		var rec MessageReceived
+
+		err = json.Unmarshal(b, &rec)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Received data: ", rec)
+
+		if rec.Type != "GENERATED_ASCII" {
+			return errors.New("forced error")
+		}
+
+		return nil
+	}
+
+	go Sub(context.Background(), PROJECT_ID, receive)
 
 	for update := range updates {
 		if update.Message != nil { // If we got a message
@@ -93,25 +108,4 @@ func main() {
 			bot.Send(msg)
 		}
 	}
-}
-
-func GenerateASCII(imge image.Image) string {
-	imge = resize.Resize(38, 17, imge, resize.Lanczos2)
-
-	txt := ""
-
-	for y := imge.Bounds().Min.Y; y <= imge.Bounds().Max.Y; y++ {
-		for x := imge.Bounds().Min.X; x <= imge.Bounds().Max.X; x++ {
-			c := imge.At(x, y)
-			r, g, b, _ := c.RGBA()
-
-			gray := (r + g + b) / 3
-
-			char := int(math.Round((float64(gray) / 65536) * float64(len(scale)-1)))
-			txt += string(scale[char])
-		}
-		txt += "\n"
-	}
-
-	return txt
 }
