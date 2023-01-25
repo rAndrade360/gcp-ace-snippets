@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 
+	"cloud.google.com/go/datastore"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
 )
@@ -26,8 +27,15 @@ func main() {
 
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("BOT_TOKEN"))
 	if err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
+
+	client, err := datastore.NewClient(context.Background(), PROJECT_ID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	dtclient := NewDatastore(client, "Message")
 
 	bot.Debug = true
 
@@ -55,6 +63,17 @@ func main() {
 			return errors.New("forced error")
 		}
 
+		txt := rec.RawImage
+		msg, err := dtclient.GetMessageByID(context.Background(), rec.ID)
+		if err != nil {
+			log.Println("Nao peguei a msg: ", err.Error())
+			return err
+		}
+
+		msgTxt := tgbotapi.NewMessage(msg.ChatID, txt)
+		msgTxt.ReplyToMessageID = msg.MessageID
+
+		bot.Send(msgTxt)
 		return nil
 	}
 
@@ -83,6 +102,16 @@ func main() {
 					FilePath:  file.FilePath,
 					ChatID:    update.Message.Chat.ID,
 					MessageID: update.Message.MessageID,
+				}
+
+				err = dtclient.SaveMessage(context.Background(), mes)
+				if err != nil {
+					log.Println("Err to save msg: ", err.Error())
+					txt := "Não foi dessa vez, estamos com problemas internos"
+					msgTxt := tgbotapi.NewMessage(update.Message.Chat.ID, txt)
+					msgTxt.ReplyToMessageID = update.Message.MessageID
+
+					bot.Send(msgTxt)
 				}
 
 				d, _ := json.Marshal(mes)
