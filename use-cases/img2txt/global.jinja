@@ -1,0 +1,17 @@
+resources:
+- type: gcp-types/pubsub-v1:projects.topics
+  name: {{properties["topicName"]}}
+  properties:
+    topic: {{properties["topicName"]}}
+- type: gcp-types/pubsub-v1:projects.subscriptions
+  name: {{properties["subscriptionName"]}}
+  properties:
+    subscription: {{properties["subscriptionName"]}}
+    topic: $(ref.{{properties["topicName"]}}.name)
+- type: gcp-types/storage-v1:buckets
+  name: {{properties["bucketName"]}}
+  properties:
+    predefinedAcl: projectPrivate
+    projection: full
+    location: US
+    storageClass: STANDARD

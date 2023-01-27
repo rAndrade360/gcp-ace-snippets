@@ -1,0 +1,10 @@
+imports:
+   - path: global.jinja
+
+resources:
+  - name: RESOURCE_NAME
+    type: global.jinja
+    properties:
+      topicName: TOPIC_NAME
+      bucketName: BUCKET_NAME
+      subscriptionName: SUBSCRIPTION_NAME
