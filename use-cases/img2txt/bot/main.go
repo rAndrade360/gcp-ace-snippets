@@ -63,14 +63,15 @@ func main() {
 			return errors.New("forced error")
 		}
 
-		txt := rec.RawImage
 		msg, err := dtclient.GetMessageByID(context.Background(), rec.ID)
 		if err != nil {
 			log.Println("Nao peguei a msg: ", err.Error())
 			return err
 		}
+		
+		log.Println("MSG: ", msg)
 
-		msgTxt := tgbotapi.NewMessage(msg.ChatID, txt)
+		msgTxt := tgbotapi.NewMessage(msg.ChatID, rec.RawImage)
 		msgTxt.ReplyToMessageID = msg.MessageID
 
 		bot.Send(msgTxt)

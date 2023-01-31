@@ -1,0 +1,9 @@
+resources:
+- name: {{properties["appName"]}}
+  type: gcp-types/appengine-v1:apps.services.versions
+  properties:
+   servicesId: default
+   appsId: {{env["project"]}}
+   deployment:
+    cloudBuildOptions:
+      appYamlPath: app.yaml
